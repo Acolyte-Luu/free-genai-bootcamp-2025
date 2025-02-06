@@ -41,18 +41,35 @@ The formatted output should generally contain three parts:
 - remember to consider beginner level sentence structures
 
 
-### Examples of sentence structure
-Here are examples of simple sentence structures.
-- The bird is black. → [Subject] [Adjective].
-- The raven is in the garden. → [Location] [Subject] [Verb].
-- Put the garbage in the garden. → [Location] [Object] [Verb].
-- Did you see the raven? → [Subject] [Object] [Verb]?
-- This morning, I saw the raven. → [Time] [Subject] [Object] [Verb].
-- Are you going? → [Subject] [Verb]?
-- Did you eat the food? → [Object] [Verb]?
- -The raven is looking at the garden. → [Subject] [Verb] [Location].
-- The raven is in the garden, and it is looking at the flowers. → [Location] [Subject] [Verb], [Object] [Verb].
- -I saw the raven because it was loud. → [Time] [Subject] [Object] [Verb] [Reason] [Subject] [Verb].
+Let me format this into a clean markdown file structure:
+
+# Sentence Structure Examples
+
+## Basic Patterns
+
+### Subject-Adjective
+- The bird is black. `[Subject] [Adjective]`
+
+### Location-Based
+- The raven is in the garden. `[Location] [Subject] [Verb]`
+- Put the garbage in the garden. `[Location] [Object] [Verb]`
+
+### Questions
+- Did you see the raven? `[Subject] [Object] [Verb]?`
+- Are you going? `[Subject] [Verb]?`
+- Did you eat the food? `[Object] [Verb]?`
+
+### Time Elements
+- This morning, I saw the raven. `[Time] [Subject] [Object] [Verb]`
+
+### Complex Actions
+- The raven is looking at the garden. `[Subject] [Verb] [Location]`
+
+### Compound Sentences
+- The raven is in the garden, and it is looking at the flowers. `[Location] [Subject] [Verb], [Object] [Verb]`
+
+### Cause and Effect
+- I saw the raven because it was loud. `[Time] [Subject] [Object] [Verb] [Reason] [Subject] [Verb]`
 
 ### Clues and Considerations
 - try and provide a non-nested bulleted list
@@ -141,4 +158,7 @@ Possible next steps:
 - ask clues about question formation
 - ask clues about verb conjugation
 
-Student Input: Are you going to the supermarket?
+
+
+### Student Input
+Are you going to the supermarket?

@@ -159,4 +159,4 @@ Possible next steps:
 
 
 ### Student Input
-- Are you going to the supermarket?
+Are you going to the supermarket?
