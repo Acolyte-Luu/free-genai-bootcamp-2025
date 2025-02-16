@@ -1,0 +1,19 @@
+{
+  "groups": [
+    {
+      "name": "Animals",
+      "words": [
+        {
+          "japanese": "猫",
+          "romaji": "neko",
+          "english": "cat"
+        },
+        {
+          "japanese": "犬",
+          "romaji": "inu",
+          "english": "dog"
+        }
+      ]
+    }
+  ]
+} 

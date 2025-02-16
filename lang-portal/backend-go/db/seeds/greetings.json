@@ -1,0 +1,39 @@
+{
+  "groups": [
+    {
+      "name": "Greetings",
+      "words": [
+        {
+          "japanese": "こんにちは",
+          "romaji": "konnichiwa",
+          "english": "hello"
+        },
+        {
+          "japanese": "おはようございます",
+          "romaji": "ohayou gozaimasu",
+          "english": "good morning"
+        },
+        {
+          "japanese": "こんばんは",
+          "romaji": "konbanwa",
+          "english": "good evening"
+        },
+        {
+          "japanese": "さようなら",
+          "romaji": "sayounara",
+          "english": "goodbye"
+        },
+        {
+          "japanese": "ありがとうございます",
+          "romaji": "arigatou gozaimasu",
+          "english": "thank you"
+        },
+        {
+          "japanese": "すみません",
+          "romaji": "sumimasen",
+          "english": "excuse me/sorry"
+        }
+      ]
+    }
+  ]
+} 

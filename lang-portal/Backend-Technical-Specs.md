@@ -17,6 +17,26 @@ A language learning school wants to build a prototype of learning portal which w
 - Everything should be in the scope of a single user
 
 
+## Directory Structure
+backend-go/
+├── cmd/
+│   └── server/
+│       └── main.go
+├── internal/
+│   ├── api/
+│   │   ├── handlers/
+│   │   ├── middleware/
+│   │   └── routes/
+│   ├── models/
+│   ├── database/
+│   └── services/
+├── db/
+│   ├── migrations/
+│   └── seeds/
+├── magefile.go
+├── go.mod
+└── words.db
+
 ## Database Schema
 the database will be a single sqlite databse called `words.db` that will be in the root of the project folder called backend-go
 
