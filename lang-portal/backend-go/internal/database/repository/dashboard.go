@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -50,7 +51,11 @@ func (r *DashboardRepository) GetLastStudySession() (*LastStudySession, error) {
 		&session.TotalWords,
 	)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			// Return nil when no sessions exist
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to fetch last study session: %v", err)
 	}
 
 	return &session, nil
@@ -102,7 +107,14 @@ func (r *DashboardRepository) GetQuickStats() (*QuickStats, error) {
 			WHERE study_date >= DATE('now', '-' || (
 				SELECT COUNT(*) FROM daily_sessions WHERE study_date >= DATE('now', '-30 days')
 			) || ' days')) as study_streak,
-			ROUND(CAST(SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) * 100, 2) as success_percentage
+			COALESCE(
+				ROUND(
+					CAST(SUM(CASE WHEN correct THEN 1 ELSE 0 END) AS FLOAT) / 
+					NULLIF(COUNT(*), 0) * 100, 
+					2
+				),
+				0.0
+			) as success_percentage
 		FROM word_review_items
 		WHERE created_at >= datetime('now', '-30 days')
 	`).Scan(
@@ -112,39 +124,65 @@ func (r *DashboardRepository) GetQuickStats() (*QuickStats, error) {
 		&stats.SuccessPercentage,
 	)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			// Return default stats when no data exists
+			return &QuickStats{
+				TotalStudySessions: 0,
+				ActiveGroups:       0,
+				StudyStreak:        0,
+				SuccessPercentage:  0.0,
+			}, nil
+		}
+		return nil, fmt.Errorf("failed to fetch quick stats: %v", err)
 	}
 
 	return &stats, nil
 }
 
+// ResetHistory resets study-related data while preserving words and groups
 func (r *DashboardRepository) ResetHistory() error {
 	tx, err := r.db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Delete study-related data in correct order
+	queries := []struct {
+		query string
+		desc  string
+	}{
+		{
+			query: "DELETE FROM word_review_items",
+			desc:  "word reviews",
+		},
+		{
+			query: "DELETE FROM study_sessions",
+			desc:  "study sessions",
+		},
 	}
 
-	_, err = tx.Exec("DELETE FROM word_review_items")
-	if err != nil {
-		tx.Rollback()
-		return err
+	for _, q := range queries {
+		if _, err := tx.Exec(q.query); err != nil {
+			return fmt.Errorf("failed to delete %s: %v", q.desc, err)
+		}
 	}
 
-	_, err = tx.Exec("DELETE FROM study_sessions")
-	if err != nil {
-		tx.Rollback()
-		return err
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 func (r *DashboardRepository) FullReset() error {
 	tx, err := r.db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to begin transaction: %v", err)
 	}
+	defer tx.Rollback()
 
+	// Delete data from tables in correct order
 	tables := []string{
 		"word_review_items",
 		"study_sessions",
@@ -156,10 +194,18 @@ func (r *DashboardRepository) FullReset() error {
 	for _, table := range tables {
 		_, err = tx.Exec("DELETE FROM " + table)
 		if err != nil {
-			tx.Rollback()
-			return err
+			return fmt.Errorf("failed to clear table %s: %v", table, err)
+		}
+		// Reset SQLite auto-increment counter
+		_, err = tx.Exec("DELETE FROM sqlite_sequence WHERE name = ?", table)
+		if err != nil {
+			return fmt.Errorf("failed to reset sequence for table %s: %v", table, err)
 		}
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	return nil
 }

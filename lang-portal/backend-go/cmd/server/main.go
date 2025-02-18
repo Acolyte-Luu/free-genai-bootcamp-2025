@@ -1,20 +1,25 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lang-portal/backend-go/internal/api/routes"
-	"github.com/lang-portal/backend-go/internal/database"
+	"github.com/lang-portal/backend-go/internal/config"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	// Set Gin to Release mode
 	gin.SetMode(gin.ReleaseMode)
 
-	// Initialize database connection
-	db := database.GetDB()
-	defer database.Close()
+	dbPath := config.GetDBPath()
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
 
 	// Verify database connection
 	if err := db.Ping(); err != nil {

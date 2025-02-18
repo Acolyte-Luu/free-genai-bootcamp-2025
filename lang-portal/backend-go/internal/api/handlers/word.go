@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -57,9 +59,16 @@ func (h *WordHandler) GetWord(c *gin.Context) {
 
 	word, err := h.wordRepo.GetWord(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, Response{
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, Response{
+				Success: false,
+				Error:   "Word not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Word not found",
+			Error:   fmt.Sprintf("Failed to fetch word: %v", err),
 		})
 		return
 	}
@@ -68,13 +77,14 @@ func (h *WordHandler) GetWord(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Failed to fetch word groups",
+			Error:   fmt.Sprintf("Failed to fetch word groups: %v", err),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":   word,
-		"groups": groups,
+	c.JSON(http.StatusOK, Response{
+		Success: true,
+		Data:    word,
+		Groups:  groups,
 	})
 }

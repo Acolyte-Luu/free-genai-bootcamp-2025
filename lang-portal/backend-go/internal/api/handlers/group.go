@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -87,20 +88,83 @@ func (h *GroupHandler) GetGroupWords(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Failed to fetch group words",
+			Error:   fmt.Sprintf("Failed to fetch group words: %v", err),
 		})
 		return
 	}
 
-	response := models.PaginatedResponse{
-		Data: words,
-		Pagination: models.Pagination{
-			CurrentPage:  page,
-			TotalPages:   (total + limit - 1) / limit,
-			TotalItems:   total,
-			ItemsPerPage: limit,
+	c.JSON(http.StatusOK, Response{
+		Success: true,
+		Data: models.PaginatedResponse{
+			Data: words,
+			Pagination: models.Pagination{
+				CurrentPage:  page,
+				TotalPages:   (total + limit - 1) / limit,
+				TotalItems:   total,
+				ItemsPerPage: limit,
+			},
 		},
+	})
+}
+
+// CreateGroup godoc
+func (h *GroupHandler) CreateGroup(c *gin.Context) {
+	var group models.Group
+	if err := c.ShouldBindJSON(&group); err != nil {
+		c.JSON(http.StatusBadRequest, Response{
+			Success: false,
+			Error:   "Invalid group data",
+		})
+		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	if err := h.groupRepo.CreateGroup(&group); err != nil {
+		c.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Error:   "Failed to create group",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, Response{
+		Success: true,
+		Data:    group,
+	})
+}
+
+// CreateGroupWords godoc
+func (h *GroupHandler) CreateGroupWords(c *gin.Context) {
+	groupID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, Response{
+			Success: false,
+			Error:   "Invalid group ID",
+		})
+		return
+	}
+
+	var request struct {
+		Words []models.Word `json:"words"`
+	}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, Response{
+			Success: false,
+			Error:   "Invalid word data",
+		})
+		return
+	}
+
+	createdWords, err := h.groupRepo.CreateGroupWords(groupID, request.Words)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to create words: %v", err),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, Response{
+		Success: true,
+		Data:    createdWords,
+	})
 }

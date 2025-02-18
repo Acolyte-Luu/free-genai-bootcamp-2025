@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -49,37 +50,46 @@ func (h *StudyHandler) GetStudySessions(c *gin.Context) {
 func (h *StudyHandler) GetStudySession(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		_ = c.Error(errors.NewBadRequestError("Invalid study session ID", err))
+		c.JSON(http.StatusBadRequest, Response{
+			Success: false,
+			Error:   "Invalid session ID",
+		})
 		return
 	}
 
 	session, err := h.studyRepo.GetStudySession(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			_ = c.Error(errors.NewNotFoundError("Study session not found"))
+			c.JSON(http.StatusNotFound, Response{
+				Success: false,
+				Error:   "Study session not found",
+			})
 			return
 		}
-		_ = c.Error(errors.NewServerError("Failed to fetch study session", err))
+		c.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to fetch study session: %v", err),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    session,
+	c.JSON(http.StatusOK, Response{
+		Success: true,
+		Data:    session,
 	})
 }
 
 // CreateStudySession godoc
 func (h *StudyHandler) CreateStudySession(c *gin.Context) {
 	var request struct {
-		GroupID         int64 `json:"group_id" binding:"required"`
-		StudyActivityID int64 `json:"study_activity_id" binding:"required"`
+		GroupID         int64 `json:"group_id"`
+		StudyActivityID int64 `json:"study_activity_id"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, Response{
 			Success: false,
-			Error:   "Invalid request body",
+			Error:   "Invalid request data",
 		})
 		return
 	}
@@ -89,19 +99,23 @@ func (h *StudyHandler) CreateStudySession(c *gin.Context) {
 		if err == services.ErrEmptyGroup {
 			c.JSON(http.StatusBadRequest, Response{
 				Success: false,
-				Error:   "Group has no words",
+				Error:   err.Error(),
 			})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Failed to create study session",
+			Error:   fmt.Sprintf("Failed to create study session: %v", err),
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"data": session,
+	c.JSON(http.StatusCreated, Response{
+		Success: true,
+		Data: gin.H{
+			"study_session_id": session.ID,
+			"group_id":         session.GroupID,
+		},
 	})
 }
 

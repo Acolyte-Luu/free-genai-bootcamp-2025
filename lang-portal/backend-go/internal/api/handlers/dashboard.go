@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lang-portal/backend-go/internal/database/repository"
@@ -21,13 +23,31 @@ func (h *DashboardHandler) GetLastStudySession(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Failed to fetch last study session",
+			Error:   fmt.Sprintf("Failed to fetch last study session: %v", err),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": session,
+	// If no session exists, return empty session structure
+	if session == nil {
+		c.JSON(http.StatusOK, Response{
+			Success: true,
+			Data: map[string]interface{}{
+				"id":                0,
+				"group_id":          0,
+				"group_name":        "",
+				"study_activity_id": 0,
+				"created_at":        time.Now(),
+				"correct_count":     0,
+				"total_words":       0,
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, Response{
+		Success: true,
+		Data:    session,
 	})
 }
 
@@ -37,13 +57,14 @@ func (h *DashboardHandler) GetStudyProgress(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Failed to fetch study progress",
+			Error:   fmt.Sprintf("Failed to fetch study progress: %v", err),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": progress,
+	c.JSON(http.StatusOK, Response{
+		Success: true,
+		Data:    progress,
 	})
 }
 
@@ -53,13 +74,14 @@ func (h *DashboardHandler) GetQuickStats(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Failed to fetch quick stats",
+			Error:   fmt.Sprintf("Failed to fetch quick stats: %v", err),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": stats,
+	c.JSON(http.StatusOK, Response{
+		Success: true,
+		Data:    stats,
 	})
 }
 
@@ -68,7 +90,7 @@ func (h *DashboardHandler) ResetHistory(c *gin.Context) {
 	if err := h.dashRepo.ResetHistory(); err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Failed to reset study history",
+			Error:   fmt.Sprintf("Failed to reset study history: %v", err),
 		})
 		return
 	}
@@ -84,7 +106,7 @@ func (h *DashboardHandler) FullReset(c *gin.Context) {
 	if err := h.dashRepo.FullReset(); err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
-			Error:   "Failed to reset application data",
+			Error:   fmt.Sprintf("Failed to reset application data: %v", err),
 		})
 		return
 	}
@@ -92,5 +114,6 @@ func (h *DashboardHandler) FullReset(c *gin.Context) {
 	c.JSON(http.StatusOK, Response{
 		Success: true,
 		Message: "Application data has been reset successfully",
+		Data:    []interface{}{},
 	})
 }

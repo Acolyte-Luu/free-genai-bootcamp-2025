@@ -2,6 +2,8 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/lang-portal/backend-go/internal/models"
@@ -53,7 +55,11 @@ func (r *GroupRepository) GetGroups(page, limit int) ([]models.Group, int, error
 func (r *GroupRepository) GetGroup(id int64) (*models.GroupWithStats, error) {
 	var group models.GroupWithStats
 	err := r.db.QueryRow(`
-		SELECT g.id, g.name, g.created_at, COUNT(wg.word_id) as total_word_count
+		SELECT 
+			g.id, 
+			g.name, 
+			g.created_at,
+			COALESCE(COUNT(wg.word_id), 0) as total_word_count
 		FROM groups g
 		LEFT JOIN words_groups wg ON g.id = wg.group_id
 		WHERE g.id = ?
@@ -65,7 +71,10 @@ func (r *GroupRepository) GetGroup(id int64) (*models.GroupWithStats, error) {
 		&group.TotalWordCount,
 	)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("group not found with id: %d", id)
+		}
+		return nil, fmt.Errorf("failed to fetch group: %v", err)
 	}
 
 	return &group, nil
@@ -90,8 +99,10 @@ func (r *GroupRepository) GetGroupWords(groupID int64, page, limit int) ([]WordW
 		WHERE group_id = ?
 	`, groupID).Scan(&total)
 	if err != nil {
+		log.Printf("Error getting total count: %v", err)
 		return nil, 0, err
 	}
+	log.Printf("Total words in group %d: %d", groupID, total)
 
 	// Get group words with stats
 	query := `
@@ -155,4 +166,46 @@ func (r *GroupRepository) CreateGroup(group *models.Group) error {
 
 	group.ID = id
 	return nil
+}
+
+func (r *GroupRepository) CreateGroupWords(groupID int64, words []models.Word) ([]models.Word, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	createdWords := make([]models.Word, 0, len(words))
+	for _, word := range words {
+		word.CreatedAt = time.Now()
+		result, err := tx.Exec(`
+			INSERT INTO words (japanese, romaji, english, created_at)
+			VALUES (?, ?, ?, ?)
+		`, word.Japanese, word.Romaji, word.English, word.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		wordID, err := result.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		word.ID = wordID
+
+		_, err = tx.Exec(`
+			INSERT INTO words_groups (word_id, group_id, created_at)
+			VALUES (?, ?, ?)
+		`, wordID, groupID, time.Now())
+		if err != nil {
+			return nil, err
+		}
+
+		createdWords = append(createdWords, word)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return createdWords, nil
 }

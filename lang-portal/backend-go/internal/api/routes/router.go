@@ -44,6 +44,8 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		api.GET("/groups", groupHandler.GetGroups)
 		api.GET("/groups/:id", groupHandler.GetGroup)
 		api.GET("/groups/:id/words", groupHandler.GetGroupWords)
+		api.POST("/groups", groupHandler.CreateGroup)
+		api.POST("/groups/:id/words", groupHandler.CreateGroupWords)
 
 		// Study sessions routes
 		api.GET("/study_sessions", studyHandler.GetStudySessions)
