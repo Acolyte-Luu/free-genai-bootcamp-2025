@@ -64,3 +64,9 @@ A: The model will download into the container, and vanish when the container sto
 Q: For LLM service which can text-generate it suggets it will only work with TGI/vLLM and all you have to do is have it running. Does TGI and vLLM have a stardarized API or is there code to detect which one is running? Do we have to really use Xeon or Guadi processor?
 
 vLLM, TGI (Text Generation Inference), and Ollama all offer APIs with OpenAI compatibility, so in theory they should be interchangable.
+
+# Novelty
+I got my LLM to run using my dedicated NVIDIA GPU.
+This was achieved by installing the nvidia container toolkit package. I also had to turn on the integration for my GPU in docker desktop since I am running on WSL2. Modified the docker compose file to use the nvidia image.
+
+
