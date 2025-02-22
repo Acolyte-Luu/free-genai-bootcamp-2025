@@ -18,6 +18,9 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 	router.Use(middleware.LoggerMiddleware())
 	router.Use(middleware.ErrorHandler())
 
+	// Add CORS middleware
+	router.Use(middleware.CORSMiddleware())
+
 	// Initialize repositories
 	wordRepo := repository.NewWordRepository(db)
 	groupRepo := repository.NewGroupRepository(db)
@@ -47,10 +50,13 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		api.POST("/groups", groupHandler.CreateGroup)
 		api.POST("/groups/:id/words", groupHandler.CreateGroupWords)
 
+		// Study activities routes
+		api.GET("/study_activities", studyHandler.GetStudyActivities)
+		api.POST("/study_activities/sessions", studyHandler.CreateStudySession)
+
 		// Study sessions routes
 		api.GET("/study_sessions", studyHandler.GetStudySessions)
 		api.GET("/study_sessions/:id", studyHandler.GetStudySession)
-		api.POST("/study_activities", studyHandler.CreateStudySession)
 		api.POST("/study_sessions/:id/words/:word_id/review", studyHandler.ReviewWord)
 		api.GET("/study_sessions/:id/words", studyHandler.GetSessionWords)
 
@@ -65,6 +71,27 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		// Reset routes
 		api.POST("/reset_history", dashboardHandler.ResetHistory)
 		api.POST("/full_reset", dashboardHandler.FullReset)
+
+		// Ollama routes
+		api.POST("/generate-vocabulary", func(c *gin.Context) {
+			var req struct {
+				Theme string `json:"theme"`
+			}
+
+			if err := c.BindJSON(&req); err != nil {
+				c.JSON(400, gin.H{"error": "Invalid request"})
+				return
+			}
+
+			llm := services.NewLLMService()
+			vocab, err := llm.GenerateVocabulary(req.Theme)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+
+			c.JSON(200, vocab)
+		})
 	}
 
 	return router

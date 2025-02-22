@@ -10,10 +10,10 @@ type StudySession struct {
 }
 
 type StudyActivity struct {
-	ID             int64     `json:"id"`
-	StudySessionID int64     `json:"study_session_id"`
-	GroupID        int64     `json:"group_id"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID           int64  `json:"id"`
+	Name         string `json:"name"`
+	ThumbnailURL string `json:"thumbnail_url"`
+	Description  string `json:"description"`
 }
 
 type WordReviewItem struct {

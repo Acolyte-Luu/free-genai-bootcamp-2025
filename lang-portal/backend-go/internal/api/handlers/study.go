@@ -205,3 +205,21 @@ func (h *StudyHandler) GetSessionWords(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+// GetStudyActivities godoc
+func (h *StudyHandler) GetStudyActivities(c *gin.Context) {
+	activities := []models.StudyActivity{
+		{
+			ID:           1,
+			Name:         "Flashcards",
+			ThumbnailURL: "/images/flashcards.png",
+			Description:  "Practice vocabulary with flashcards",
+		},
+		// Add other activities...
+	}
+
+	c.JSON(http.StatusOK, Response{
+		Success: true,
+		Data:    activities,
+	})
+}
