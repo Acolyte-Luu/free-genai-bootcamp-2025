@@ -1,0 +1,27 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+  ollama-server:
+    image: ollama/ollama
+    container_name: ollama-server
+    ports:
+      - "${LLM_ENDPOINT_PORT:-9000}:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, compute, utility]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - NO_PROXY=${NO_PROXY:-localhost}
+      - LLM_MODEL_ID=${LLM_MODEL_ID:-"llama3.2:1b"}
+      - host_ip=${HOST_IP}
+    runtime: nvidia
+
+networks:
+  default:
+    driver: bridge
