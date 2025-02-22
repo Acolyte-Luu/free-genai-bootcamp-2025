@@ -69,4 +69,58 @@ vLLM, TGI (Text Generation Inference), and Ollama all offer APIs with OpenAI com
 I got my LLM to run using my dedicated NVIDIA GPU.
 This was achieved by installing the nvidia container toolkit package. I also had to turn on the integration for my GPU in docker desktop since I am running on WSL2. Modified the docker compose file to use the nvidia image.
 
+## Steps
 
+1. Install the nvidia container toolkit
+```sh
+# Remove any existing NVIDIA Docker sources
+sudo rm /etc/apt/sources.list.d/nvidia-container-runtime.list
+
+# Add NVIDIA repository and GPG key using the new method
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# Update package listing
+sudo apt-get update
+
+# Install NVIDIA Container Toolkit
+sudo apt-get install -y nvidia-container-toolkit
+
+# Configure the Docker daemon to recognize the NVIDIA Container Runtime
+sudo nvidia-ctk runtime configure --runtime=docker
+
+# Restart Docker daemon by relaunching docker desktop
+```
+
+If this does not work, you can try the following:
+1. First, make sure you have the NVIDIA CUDA driver installed on Windows (host system)
+
+2.Edit or create a .wslconfig file in your Windows user directory (C:\Users\YourUsername\.wslconfig):
+```sh
+[wsl2]
+gpuSupport=true
+```
+
+3. Update your WSL kernel to support NVIDIA GPUs. From PowerShell (as Administrator):
+```sh
+wsl --update
+```
+
+4. Make sure you have the CUDA toolkit installed in your WSL environment:
+```sh
+sudo apt-get update
+sudo apt-get install -y nvidia-cuda-toolkit
+```
+
+5. Turn on the integration for my GPU in docker desktop
+
+6. Modify the docker compose file to use the nvidia image
+  docker compose file in this repo
+
+7. Run the docker compose file
+```sh
+HOST_IP=$(hostname -I | awk '{print $1}') NO_PROXY=localhost LLM_ENDPOINT_PORT=9000 LLM_MODEL_ID="llama3.2:1b" docker compose up
+```
