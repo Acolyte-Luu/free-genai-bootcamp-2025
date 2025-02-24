@@ -33,7 +33,7 @@ https://github.com/ollama/ollama/blob/main/docs/api.md
 ## Download (Pull) a model
 
 curl http://localhost:9000/api/pull -d '{
-  "model": "llama3.2:1b"
+  "model": "llama3.2:3b"
 }'
 
 ## Generate a Request
