@@ -1,3 +1,8 @@
+# Initialize PyTorch first to avoid Streamlit file watcher issues
+import torch
+# Force initialization 
+_ = torch.zeros(1)
+
 import streamlit as st
 from typing import Dict
 import json
@@ -6,7 +11,12 @@ import re
 
 import sys
 import os
+# Add parent directory to path BEFORE importing backend modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Now import backend modules AFTER path setup
+import backend.rag
+import backend.interactive
 
 from backend.chat import LocalLLMChat
 from backend.get_transcript import YouTubeTranscriptDownloader
@@ -275,8 +285,16 @@ def render_rag_stage():
         st.info("Generated response will appear here")
 
 def render_interactive_stage():
-    """Render the interactive learning stage"""
+    """Render the interactive learning stage with RAG"""
     st.header("Interactive Learning")
+    
+    # Initialize practice generator if not exists
+    if 'practice_generator' not in st.session_state:
+        from backend.interactive import InteractivePracticeGenerator
+        st.session_state.practice_generator = InteractivePracticeGenerator()
+    
+    if 'current_question' not in st.session_state:
+        st.session_state.current_question = None
     
     # Practice type selection
     practice_type = st.selectbox(
@@ -284,25 +302,61 @@ def render_interactive_stage():
         ["Dialogue Practice", "Vocabulary Quiz", "Listening Exercise"]
     )
     
-    col1, col2 = st.columns([2, 1])
+    # Generate button
+    if st.button("Generate New Practice Question"):
+        with st.spinner("Generating question..."):
+            try:
+                question_data = st.session_state.practice_generator.generate_question(practice_type)
+                st.session_state.current_question = question_data
+            except Exception as e:
+                st.error(f"Error generating question: {str(e)}")
     
-    with col1:
-        st.subheader("Practice Scenario")
-        # Placeholder for scenario
-        st.info("Practice scenario will appear here")
+    # Display question if available
+    if st.session_state.current_question:
+        col1, col2 = st.columns([2, 1])
         
-        # Placeholder for multiple choice
-        options = ["Option 1", "Option 2", "Option 3", "Option 4"]
-        selected = st.radio("Choose your answer:", options)
+        with col1:
+            st.subheader("Practice Scenario")
+            
+            # Display setup/situation/action based on practice type
+            if practice_type == "Dialogue Practice":
+                st.markdown(f"**Setup:** {st.session_state.current_question['setup']}")
+            elif practice_type == "Vocabulary Quiz":
+                st.markdown(f"**Situation:** {st.session_state.current_question['setup']}")
+            else:
+                st.markdown(f"**Action:** {st.session_state.current_question['setup']}")
+                
+            st.markdown(f"**Question:** {st.session_state.current_question['question']}")
+            
+            # Display options
+            options = st.session_state.current_question['options']
+            selected = st.radio("Choose your answer:", 
+                               [f"{i+1}. {option}" for i, option in enumerate(options)])
+            
+            # Get selected index (0-based)
+            selected_index = int(selected.split('.')[0]) - 1
+            
+            # Check answer button
+            if st.button("Check Answer"):
+                correct_index = st.session_state.current_question["correct_index"]
+                if selected_index == correct_index:
+                    st.success("Correct! Great job!")
+                else:
+                    st.error(f"Not quite. The correct answer is: {correct_index + 1}. {options[correct_index]}")
         
-    with col2:
-        st.subheader("Audio")
-        # Placeholder for audio player
-        st.info("Audio will appear here")
-        
-        st.subheader("Feedback")
-        # Placeholder for feedback
-        st.info("Feedback will appear here")
+        with col2:
+            st.subheader("Similar Questions")
+            
+            # Show the retrieved similar questions
+            if 'similar_questions' in st.session_state.current_question:
+                for i, q in enumerate(st.session_state.current_question['similar_questions']):
+                    with st.expander(f"Example {i+1}"):
+                        st.markdown(q["question"])
+                        
+            st.subheader("Audio")
+            st.info("Audio feature coming soon!")
+    else:
+        st.info("Click 'Generate New Practice Question' to start")
 
 def main():
     render_header()
