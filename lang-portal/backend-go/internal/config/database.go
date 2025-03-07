@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"log"
+	"os"
+)
 
 const (
 	TestDBPath = "config/database/test.db"
@@ -8,8 +11,15 @@ const (
 )
 
 func GetDBPath() string {
-	if os.Getenv("GO_ENV") == "test" {
-		return TestDBPath
+	env := os.Getenv("GO_ENV")
+	var dbPath string
+
+	if env == "test" {
+		dbPath = TestDBPath
+	} else {
+		dbPath = DevDBPath
 	}
-	return DevDBPath
+
+	log.Printf("Using database path for %s environment: %s", env, dbPath)
+	return dbPath
 }

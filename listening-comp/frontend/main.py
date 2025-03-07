@@ -8,6 +8,7 @@ from typing import Dict
 import json
 from collections import Counter
 import re
+from datetime import datetime
 
 import sys
 import os
@@ -20,6 +21,7 @@ import backend.interactive
 
 from backend.chat import LocalLLMChat
 from backend.get_transcript import YouTubeTranscriptDownloader
+from backend.audio_generator import JapaneseAudioGenerator
 
 
 # Page config
@@ -34,6 +36,10 @@ if 'transcript' not in st.session_state:
     st.session_state.transcript = None
 if 'messages' not in st.session_state:
     st.session_state.messages = []
+
+# Initialize audio generator in session state
+if 'audio_generator' not in st.session_state:
+    st.session_state.audio_generator = JapaneseAudioGenerator()
 
 def render_header():
     """Render the header section"""
@@ -284,6 +290,26 @@ def render_rag_stage():
         # Placeholder for LLM response
         st.info("Generated response will appear here")
 
+def load_question_history():
+    """Load question history from a JSON file"""
+    history_file = "question_history.json"
+    if os.path.exists(history_file):
+        try:
+            with open(history_file, "r", encoding="utf-8") as file:
+                return json.load(file)
+        except Exception as e:
+            print(f"Error loading history: {e}")
+    return []
+
+def save_question_history(history):
+    """Save question history to a JSON file"""
+    history_file = "question_history.json"
+    try:
+        with open(history_file, "w", encoding="utf-8") as file:
+            json.dump(history, file, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Error saving history: {e}")
+
 def render_interactive_stage():
     """Render the interactive learning stage with RAG"""
     st.header("Interactive Learning")
@@ -295,43 +321,63 @@ def render_interactive_stage():
     
     if 'current_question' not in st.session_state:
         st.session_state.current_question = None
-    
-    # Practice type selection
-    practice_type = st.selectbox(
-        "Select Practice Type",
-        ["Dialogue Practice", "Vocabulary Quiz", "Listening Exercise"]
-    )
-    
-    # Generate button
-    if st.button("Generate New Practice Question"):
-        with st.spinner("Generating question..."):
-            try:
-                question_data = st.session_state.practice_generator.generate_question(practice_type)
-                st.session_state.current_question = question_data
-            except Exception as e:
-                st.error(f"Error generating question: {str(e)}")
-    
-    # Display question if available
-    if st.session_state.current_question:
-        col1, col2 = st.columns([2, 1])
         
-        with col1:
+    # Initialize question history from file if not exists
+    if 'question_history' not in st.session_state:
+        st.session_state.question_history = load_question_history()
+    
+    # Create a 2-column layout with sidebar for history
+    col_main, col_history = st.columns([3, 1])
+    
+    with col_main:
+        # Practice type selection
+        practice_type = st.selectbox(
+            "Select Practice Type",
+            ["Dialogue Practice", "Vocabulary Quiz", "Listening Exercise"]
+        )
+        
+        # Generate button
+        if st.button("Generate New Practice Question"):
+            with st.spinner("Generating question..."):
+                try:
+                    question_data = st.session_state.practice_generator.generate_question(practice_type)
+                    
+                    # Add timestamp and type to question data
+                    question_data["timestamp"] = datetime.now().strftime("%H:%M:%S")
+                    question_data["practice_type"] = practice_type
+                    
+                    st.session_state.current_question = question_data
+                    
+                    # Add to history (limited to last 10 questions)
+                    st.session_state.question_history.append(question_data)
+                    if len(st.session_state.question_history) > 10:
+                        st.session_state.question_history.pop(0)  # Remove oldest
+                    
+                    # Save history to file
+                    save_question_history(st.session_state.question_history)
+                        
+                except Exception as e:
+                    st.error(f"Error generating question: {str(e)}")
+        
+        # Display current question
+        if st.session_state.current_question:
             st.subheader("Practice Scenario")
             
             # Display setup/situation/action based on practice type
-            if practice_type == "Dialogue Practice":
+            current_type = st.session_state.current_question.get('practice_type', practice_type)
+            if current_type == "Dialogue Practice":
                 st.markdown(f"**Setup:** {st.session_state.current_question['setup']}")
-            elif practice_type == "Vocabulary Quiz":
+            elif current_type == "Vocabulary Quiz":
                 st.markdown(f"**Situation:** {st.session_state.current_question['setup']}")
             else:
                 st.markdown(f"**Action:** {st.session_state.current_question['setup']}")
-                
+            
             st.markdown(f"**Question:** {st.session_state.current_question['question']}")
             
             # Display options
             options = st.session_state.current_question['options']
             selected = st.radio("Choose your answer:", 
-                               [f"{i+1}. {option}" for i, option in enumerate(options)])
+                              [f"{i+1}. {option}" for i, option in enumerate(options)])
             
             # Get selected index (0-based)
             selected_index = int(selected.split('.')[0]) - 1
@@ -339,12 +385,29 @@ def render_interactive_stage():
             # Check answer button
             if st.button("Check Answer"):
                 correct_index = st.session_state.current_question["correct_index"]
-                if selected_index == correct_index:
-                    st.success("Correct! Great job!")
+                is_correct = selected_index == correct_index
+                
+                # Generate detailed feedback
+                feedback = st.session_state.practice_generator.generate_answer_feedback(
+                    st.session_state.current_question, 
+                    selected_index
+                )
+                
+                # Display result
+                if is_correct:
+                    st.success("✅ Correct! Great job!")
                 else:
-                    st.error(f"Not quite. The correct answer is: {correct_index + 1}. {options[correct_index]}")
-        
-        with col2:
+                    st.error(f"❌ Not quite. The correct answer is: {correct_index + 1}. {options[correct_index]}")
+                
+                # Display detailed feedback
+                st.subheader("Explanation")
+                st.markdown(feedback["feedback"])
+                
+                # Optionally add a "Learn More" section
+                with st.expander("Learn More"):
+                    st.info("Click to hear pronunciation (coming soon)")
+            
+            # Similar Questions section
             st.subheader("Similar Questions")
             
             # Show the retrieved similar questions
@@ -352,11 +415,57 @@ def render_interactive_stage():
                 for i, q in enumerate(st.session_state.current_question['similar_questions']):
                     with st.expander(f"Example {i+1}"):
                         st.markdown(q["question"])
-                        
+            
+            # Audio section
             st.subheader("Audio")
-            st.info("Audio feature coming soon!")
-    else:
-        st.info("Click 'Generate New Practice Question' to start")
+            if st.button("Generate Audio"):
+                with st.spinner("Generating audio..."):
+                    try:
+                        # Generate audio for the current question
+                        audio_path = st.session_state.audio_generator.generate_audio_for_question(
+                            st.session_state.current_question
+                        )
+                        
+                        # Store the path in session state
+                        st.session_state.current_audio_path = audio_path
+                        
+                        # Show success message
+                        st.success("Audio generated successfully!")
+                    except Exception as e:
+                        st.error(f"Error generating audio: {str(e)}")
+
+            # Display audio player if we have a generated audio file
+            if 'current_audio_path' in st.session_state and os.path.exists(st.session_state.current_audio_path):
+                if st.session_state.current_audio_path.endswith('.mp3') or st.session_state.current_audio_path.endswith('.wav'):
+                    # Display audio player for audio files
+                    audio_file = open(st.session_state.current_audio_path, 'rb')
+                    audio_bytes = audio_file.read()
+                    audio_format = 'audio/mp3' if st.session_state.current_audio_path.endswith('.mp3') else 'audio/wav'
+                    st.audio(audio_bytes, format=audio_format)
+                elif st.session_state.current_audio_path.endswith('.txt'):
+                    # Display text for TXT files (fallback)
+                    with open(st.session_state.current_audio_path, 'r', encoding='utf-8') as f:
+                        script_content = f.read()
+                    st.markdown(script_content)
+                    st.warning("Audio generation requires additional dependencies. Install them with:")
+                    st.code("pip install TTS\nsudo apt-get install ffmpeg  # or brew install ffmpeg for macOS")
+            else:
+                st.info("Click 'Generate Audio' to create spoken audio for this question")
+        else:
+            st.info("Click 'Generate New Practice Question' to start")
+    
+    # Question history sidebar
+    with col_history:
+        st.subheader("Question History")
+        
+        if not st.session_state.question_history:
+            st.info("No questions in history yet")
+        else:
+            for i, past_q in enumerate(reversed(st.session_state.question_history)):
+                # Create a unique key for each history item
+                if st.button(f"{past_q['timestamp']} - {past_q['practice_type']}", key=f"history_{i}"):
+                    st.session_state.current_question = past_q
+                    st.rerun()
 
 def main():
     render_header()

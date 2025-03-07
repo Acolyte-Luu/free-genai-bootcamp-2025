@@ -6,7 +6,6 @@ RSpec.describe 'Study Sessions API' do
   describe 'POST /study_activities' do
     it 'creates a new study session' do
       response = post('/study_activities', {
-        group_id: 1,
         study_activity_id: 1
       })
       body = JSON.parse(response.body)
@@ -14,7 +13,7 @@ RSpec.describe 'Study Sessions API' do
       expect(response.code).to eq(201)
       expect(body['data']).to include(
         'study_session_id',
-        'group_id'
+        'study_activity'
       )
     end
   end

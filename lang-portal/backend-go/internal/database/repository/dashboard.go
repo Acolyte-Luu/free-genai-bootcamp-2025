@@ -186,7 +186,7 @@ func (r *DashboardRepository) FullReset() error {
 	tables := []string{
 		"word_review_items",
 		"study_sessions",
-		"words_groups",
+		"word_groups",
 		"words",
 		"groups",
 	}

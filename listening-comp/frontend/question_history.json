@@ -1,0 +1,152 @@
+[
+  {
+    "setup": "A mother and son are at a store, looking for a gift for the mother's birthday.\nMother: \"どれを買いますか。\"\nSon: \"えーと、花を選びますね。\"",
+    "question": "What does the son want to buy?",
+    "options": [
+      "Knife",
+      "Flowers",
+      "Book",
+      "Pencil"
+    ],
+    "similar_questions": [
+      {
+        "question": "<question>Setup: A man and woman are at a restaurant.\nThe man is looking at the menu.\nWoman: \"何を注文しますか？\"\nMan: \"ラーメンを食べたいです。\"\nQuestion: What does the man want to eat?\nOptions:\n1. Rice\n2. Ramen\n3. Sushi\n4. Tempura</question>",
+        "metadata": {
+          "section": "問題1",
+          "type": "conversation",
+          "video_id": "hardcoded"
+        },
+        "id": "hardcoded_0",
+        "score": 0.30328655027133095
+      }
+    ],
+    "correct_index": 2,
+    "timestamp": "23:29:39",
+    "practice_type": "Dialogue Practice"
+  },
+  {
+    "setup": "タオル売りの男性と女性が駅の近くで会話しています。\n男性: \"今日は雨が降りそうですね。\"\n女性: \"そうです。私は傘を買わないと困りますよ。\"",
+    "question": "女性は何を買うつもりですか?",
+    "options": [
+      "タオル",
+      "傘",
+      "袋",
+      "靴下"
+    ],
+    "similar_questions": [
+      {
+        "question": "<question>Setup: A man and woman are at a restaurant.\nThe man is looking at the menu.\nWoman: \"何を注文しますか？\"\nMan: \"ラーメンを食べたいです。\"\nQuestion: What does the man want to eat?\nOptions:\n1. Rice\n2. Ramen\n3. Sushi\n4. Tempura</question>",
+        "metadata": {
+          "section": "問題1",
+          "type": "conversation",
+          "video_id": "hardcoded"
+        },
+        "id": "hardcoded_0",
+        "score": 0.30328655027133095
+      }
+    ],
+    "correct_index": 2,
+    "timestamp": "23:29:48",
+    "practice_type": "Dialogue Practice"
+  },
+  {
+    "setup": "会話の場面です。",
+    "question": "質問に答えてください。",
+    "options": [
+      "英文学",
+      "小説",
+      "歴史",
+      "経済学"
+    ],
+    "similar_questions": [
+      {
+        "question": "<question>Setup: A man and woman are at a restaurant.\nThe man is looking at the menu.\nWoman: \"何を注文しますか？\"\nMan: \"ラーメンを食べたいです。\"\nQuestion: What does the man want to eat?\nOptions:\n1. Rice\n2. Ramen\n3. Sushi\n4. Tempura</question>",
+        "metadata": {
+          "section": "問題1",
+          "type": "conversation",
+          "video_id": "hardcoded"
+        },
+        "id": "hardcoded_0",
+        "score": 0.30328655027133095
+      }
+    ],
+    "correct_index": 0,
+    "timestamp": "23:32:23",
+    "practice_type": "Dialogue Practice"
+  },
+  {
+    "setup": "You are on a train and someone is standing too close to you, making you uncomfortable.",
+    "question": "どのように言うべきですか。",
+    "options": [
+      "お気を付けてください",
+      "私の席に座ってください",
+      "すみません、離してください",
+      "まちがいです"
+    ],
+    "similar_questions": [
+      {
+        "question": "<question>Action: You want to order food at a restaurant.\nQuestion: What would you say to call the waiter?\nOptions:\n1. すみません\n2. ありがとう\n3. おはようございます\n4. さようなら</question>",
+        "metadata": {
+          "section": "問題3",
+          "type": "action",
+          "video_id": "hardcoded"
+        },
+        "id": "hardcoded_2",
+        "score": 0.28344877817844255
+      }
+    ],
+    "correct_index": 1,
+    "timestamp": "23:32:29",
+    "practice_type": "Listening Exercise"
+  },
+  {
+    "setup": "A friend is visiting a new student's home for the first time.\nStudent: \"お客様は、どの部屋に上がりますか？\"\nFriend: \"\"です。",
+    "question": "どの部屋に入るのでしょうか？",
+    "options": [
+      "トイレ",
+      "キッチン",
+      "部屋",
+      "浴室"
+    ],
+    "similar_questions": [
+      {
+        "question": "<question>Setup: A man and woman are at a restaurant.\nThe man is looking at the menu.\nWoman: \"何を注文しますか？\"\nMan: \"ラーメンを食べたいです。\"\nQuestion: What does the man want to eat?\nOptions:\n1. Rice\n2. Ramen\n3. Sushi\n4. Tempura</question>",
+        "metadata": {
+          "section": "問題1",
+          "type": "conversation",
+          "video_id": "hardcoded"
+        },
+        "id": "hardcoded_0",
+        "score": 0.30328655027133095
+      }
+    ],
+    "correct_index": 1,
+    "timestamp": "23:40:06",
+    "practice_type": "Dialogue Practice"
+  },
+  {
+    "setup": "会社の社長と新入りの就業員が職場で話しています。\n社長：「明日、東京に出張する計画を立てています。」\n就業員：「いつ出発しますか？」",
+    "question": "「いつ出発しますか」は何のことを言いたいですか？",
+    "options": [
+      "会社の仕事の進捗について",
+      "出張先の場所について",
+      "明日の出発時間について",
+      "業績が良いことについて"
+    ],
+    "similar_questions": [
+      {
+        "question": "<question>Setup: A man and woman are at a restaurant.\nThe man is looking at the menu.\nWoman: \"何を注文しますか？\"\nMan: \"ラーメンを食べたいです。\"\nQuestion: What does the man want to eat?\nOptions:\n1. Rice\n2. Ramen\n3. Sushi\n4. Tempura</question>",
+        "metadata": {
+          "section": "問題1",
+          "type": "conversation",
+          "video_id": "hardcoded"
+        },
+        "id": "hardcoded_0",
+        "score": 0.30328655027133095
+      }
+    ],
+    "correct_index": 0,
+    "timestamp": "12:38:38",
+    "practice_type": "Dialogue Practice"
+  }
+]

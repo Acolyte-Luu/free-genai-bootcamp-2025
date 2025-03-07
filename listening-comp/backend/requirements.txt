@@ -2,3 +2,5 @@ chromadb
 streamlit
 boto3
 youtube_transcript_api
+torch
+torchaudio

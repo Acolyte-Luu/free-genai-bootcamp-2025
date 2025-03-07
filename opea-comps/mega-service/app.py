@@ -76,11 +76,11 @@ class ExampleService:
             if not isinstance(request, dict):
                 # Handle ChatCompletionRequest
                 combined_prompt = request.messages[-1].content if request.messages else ""
-                model = request.model or "llama3.2:1b"
+                model = request.model or "llama3.1:8b"
             else:
                 # Handle dict
                 combined_prompt = request.get("prompt", "")
-                model = request.get("model", "llama3.2:1b")
+                model = request.get("model", "llama3.1:8b")
             
             logger.info(f"Combined prompt: {combined_prompt}")
             

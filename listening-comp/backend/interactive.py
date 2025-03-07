@@ -423,3 +423,48 @@ class InteractivePracticeGenerator:
             embedding_function=embedding_func
         )
         print(f"Recreated collection: {collection_name}")
+
+    def generate_answer_feedback(self, question: Dict, selected_index: int) -> Dict:
+        """Generate detailed feedback for the user's answer"""
+        correct_index = question.get("correct_index", 0)
+        is_correct = selected_index == correct_index
+        
+        # Get details for prompt
+        setup = question.get("setup", "")
+        question_text = question.get("question", "")
+        options = question.get("options", [])
+        selected_option = options[selected_index] if 0 <= selected_index < len(options) else "Unknown"
+        correct_option = options[correct_index] if 0 <= correct_index < len(options) else "Unknown"
+        
+        # Create prompt for LLM
+        practice_type = question.get("practice_type", "unknown")
+        prompt = f"""
+        You are a Japanese language teacher providing feedback on a student's answer.
+        
+        Question Type: {practice_type}
+        Context: {setup}
+        Question: {question_text}
+        
+        Options:
+        {', '.join([f"{i+1}. {opt}" for i, opt in enumerate(options)])}
+        
+        The student selected: {selected_index + 1}. {selected_option}
+        The correct answer is: {correct_index + 1}. {correct_option}
+        
+        Please provide:
+        1. A brief explanation of why the correct answer is right
+        2. {'Why the student\'s answer is incorrect and what they might have misunderstood' if not is_correct else 'A compliment on their correct understanding'}
+        3. A relevant grammar or vocabulary tip related to this question
+        
+        Format your response in simple markdown. Keep it concise but educational.
+        """
+        
+        # Generate feedback
+        feedback = self.llm.generate_response(prompt)
+        
+        return {
+            "is_correct": is_correct,
+            "selected_option": selected_option,
+            "correct_option": correct_option,
+            "feedback": feedback
+        }

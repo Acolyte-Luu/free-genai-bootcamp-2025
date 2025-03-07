@@ -93,7 +93,7 @@ func (r *WordRepository) GetWordGroups(wordID int64) ([]models.Group, error) {
 	rows, err := r.db.Query(`
 		SELECT g.id, g.name, g.created_at
 		FROM groups g
-		JOIN words_groups wg ON g.id = wg.group_id
+		JOIN word_groups wg ON g.id = wg.group_id
 		WHERE wg.word_id = ?
 	`, wordID)
 	if err != nil {

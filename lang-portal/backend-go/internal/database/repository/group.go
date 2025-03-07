@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"time"
 
@@ -54,6 +53,8 @@ func (r *GroupRepository) GetGroups(page, limit int) ([]models.Group, int, error
 
 func (r *GroupRepository) GetGroup(id int64) (*models.GroupWithStats, error) {
 	var group models.GroupWithStats
+
+	log.Printf("Executing query for group ID %d", id)
 	err := r.db.QueryRow(`
 		SELECT 
 			g.id, 
@@ -61,7 +62,7 @@ func (r *GroupRepository) GetGroup(id int64) (*models.GroupWithStats, error) {
 			g.created_at,
 			COALESCE(COUNT(wg.word_id), 0) as total_word_count
 		FROM groups g
-		LEFT JOIN words_groups wg ON g.id = wg.group_id
+		LEFT JOIN word_groups wg ON g.id = wg.group_id 
 		WHERE g.id = ?
 		GROUP BY g.id
 	`, id).Scan(
@@ -70,13 +71,13 @@ func (r *GroupRepository) GetGroup(id int64) (*models.GroupWithStats, error) {
 		&group.CreatedAt,
 		&group.TotalWordCount,
 	)
+
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("group not found with id: %d", id)
-		}
-		return nil, fmt.Errorf("failed to fetch group: %v", err)
+		log.Printf("Database error: %v", err)
+		return nil, err
 	}
 
+	log.Printf("Found group in database: %+v", group)
 	return &group, nil
 }
 
@@ -95,8 +96,9 @@ func (r *GroupRepository) GetGroupWords(groupID int64, page, limit int) ([]WordW
 	var total int
 	err := r.db.QueryRow(`
 		SELECT COUNT(*) 
-		FROM words_groups 
-		WHERE group_id = ?
+		FROM words w
+		JOIN word_groups wg ON w.id = wg.word_id
+		WHERE wg.group_id = ?
 	`, groupID).Scan(&total)
 	if err != nil {
 		log.Printf("Error getting total count: %v", err)
@@ -113,7 +115,7 @@ func (r *GroupRepository) GetGroupWords(groupID int64, page, limit int) ([]WordW
 			COALESCE(SUM(CASE WHEN wri.correct THEN 1 ELSE 0 END), 0) as correct_count,
 			COALESCE(SUM(CASE WHEN NOT wri.correct THEN 1 ELSE 0 END), 0) as incorrect_count
 		FROM words w
-		JOIN words_groups wg ON w.id = wg.word_id
+		JOIN word_groups wg ON w.id = wg.word_id
 		LEFT JOIN word_review_items wri ON w.id = wri.word_id
 		WHERE wg.group_id = ?
 		GROUP BY w.id
@@ -193,7 +195,7 @@ func (r *GroupRepository) CreateGroupWords(groupID int64, words []models.Word) (
 		word.ID = wordID
 
 		_, err = tx.Exec(`
-			INSERT INTO words_groups (word_id, group_id, created_at)
+			INSERT INTO word_groups (word_id, group_id, created_at)
 			VALUES (?, ?, ?)
 		`, wordID, groupID, time.Now())
 		if err != nil {
@@ -208,4 +210,30 @@ func (r *GroupRepository) CreateGroupWords(groupID int64, words []models.Word) (
 	}
 
 	return createdWords, nil
+}
+
+func (r *GroupRepository) GetGroupWordsRaw(id int64) ([]models.Word, error) {
+	// SQL query to fetch words along with group information and parts data
+	rows, err := r.db.Query(`
+		SELECT w.id, w.japanese, w.romaji, w.english, w.parts
+		FROM words w
+		JOIN word_groups wg ON w.id = wg.word_id
+		WHERE wg.group_id = ?;
+	`, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var words []models.Word
+	for rows.Next() {
+		var w models.Word
+		// Scan including the parts field
+		if err := rows.Scan(&w.ID, &w.Japanese, &w.Romaji, &w.English, &w.Parts); err != nil {
+			return nil, err
+		}
+		words = append(words, w)
+	}
+
+	return words, nil
 }

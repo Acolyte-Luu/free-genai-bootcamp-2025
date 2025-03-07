@@ -9,11 +9,15 @@ type StudySession struct {
 	CreatedAt       time.Time `json:"created_at"`
 }
 
+// StudyActivity represents a study activity
 type StudyActivity struct {
-	ID           int64  `json:"id"`
-	Name         string `json:"name"`
-	ThumbnailURL string `json:"thumbnail_url"`
-	Description  string `json:"description"`
+	ID           int64     `json:"id"`
+	GroupID      int64     `json:"group_id"`
+	StartedAt    time.Time `json:"started_at"`
+	EndedAt      time.Time `json:"ended_at,omitempty"`
+	Name         string    `json:"name,omitempty"`
+	ThumbnailURL string    `json:"thumbnail_url,omitempty"`
+	Description  string    `json:"description,omitempty"`
 }
 
 type WordReviewItem struct {
@@ -30,4 +34,10 @@ type StudySessionResponse struct {
 	StartTime        time.Time `json:"start_time"`
 	EndTime          time.Time `json:"end_time"`
 	ReviewItemsCount int       `json:"review_items_count"`
+}
+
+// ActivityLaunchData represents data needed to launch a study activity
+type ActivityLaunchData struct {
+	Activity StudyActivity `json:"activity"`
+	Groups   []Group       `json:"groups"`
 }
