@@ -11,7 +11,7 @@ A Gradio-based application for practicing Japanese writing with automatic feedba
 
 2. Make sure your LocalLLM wrapper is properly configured.
 
-3. Ensure the vocabulary API is running at `localhost:5000/api/groups/:id/raw`
+3. Ensure the vocabulary API is running at `localhost:8080/api/groups/:id/raw`
 
 4. Run the application:
    ```
