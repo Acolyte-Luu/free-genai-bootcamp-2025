@@ -122,5 +122,5 @@ sudo apt-get install -y nvidia-cuda-toolkit
 
 7. Run the docker compose file
 ```sh
-HOST_IP=$(hostname -I | awk '{print $1}') NO_PROXY=localhost LLM_ENDPOINT_PORT=9000 LLM_MODEL_ID="llama3.2:1b" docker compose up
+HOST_IP=$(hostname -I | awk '{print $1}') NO_PROXY=localhost LLM_ENDPOINT_PORT=9000 LLM_MODEL_ID="llama3.1:8b" docker compose up
 ```
