@@ -39,8 +39,17 @@ type GenerateResponse struct {
 }
 
 func (s *LLMService) GenerateVocabulary(theme string) (string, error) {
-	prompt := fmt.Sprintf(`Generate a JSON array of 10 Japanese words about "%s" in this EXACT format:
+	prompt := fmt.Sprintf(`Generate a JSON array of 5 Japanese words about "%s".
 
+BEFORE responding, check each entry to ensure the "japanese" field contains ONLY actual Japanese characters.
+If you're unsure about a Japanese word, use hiragana or katakana instead of leaving it blank or using quotes.
+
+Here are more examples of correct responses:
+- For "dog": "japanese": "犬" or "いぬ" (NOT """)
+- For "cat": "japanese": "猫" or "ねこ" (NOT """)
+- For "water": "japanese": "水" or "みず" (NOT """)
+
+Follow this EXACT format:
 [
 	{
 		"japanese": "寿司",
@@ -51,6 +60,16 @@ func (s *LLMService) GenerateVocabulary(theme string) (string, error) {
 		"japanese": "天ぷら",
 		"romaji": "tempura",
 		"english": "tempura"
+	},
+	{
+		"japanese": "りんご",
+		"romaji": "ringo",
+		"english": "apple"
+	},
+	{
+		"japanese": "コンピューター",
+		"romaji": "konpyuutaa",
+		"english": "computer"
 	}
 ]
 
@@ -58,20 +77,34 @@ CRITICAL RULES:
 1. Use EXACTLY these field names: "japanese", "romaji", "english"
 2. NEVER use "kanji" as a field name
 3. All fields must have non-empty values
-4. Japanese field must contain Japanese characters
-5. Output ONLY the JSON array - nothing else
-6. Must generate exactly 10 items`, theme)
+4. Japanese field MUST contain ONLY Japanese characters (kanji)
+5. NEVER use quotation marks (") or any other punctuation in the "japanese" field
+6. Output ONLY the JSON array - nothing else
+7. Must generate exactly 5 items`, theme)
 
 	systemMsg := `You are a Japanese vocabulary generator.
+	You MUST generate Japanese characters in the "japanese" field.
+	The "japanese" field CANNOT contain quote marks, latin letters, or punctuation.
+	It MUST contain ONLY kanji, hiragana, or katakana characters.
+	For example:
+	- Good: "japanese": "寿司" (uses actual Japanese kanji)
+	- Good: "japanese": "すし" (uses hiragana)
+	- Good: "japanese": "スシ" (uses katakana)
+	- BAD: "japanese": """ (uses quotes)
+	- BAD: "japanese": "sushi" (uses latin letters)
+	If you don't know the exact kanji, use hiragana or katakana instead.
 	Generate ONLY valid JSON arrays.
 	Always use these exact field names:
-	- "japanese" for Japanese text (not "kanji")
+	- "japanese" for Japanese text (MUST use kanji ONLY)
 	- "romaji" for pronunciation
 	- "english" for translation
+	CRITICAL: The "japanese" field must ALWAYS contain actual Japanese characters, not quotes or Roman letters.
+	Here are examples of correct Japanese characters:
+	- Kanji: 寿司, 魚, 水, 犬, 猫
 	Never leave any fields empty.`
 
 	req := GenerateRequest{
-		Model:  "llama3.2:1b",
+		Model:  "qwen2.5:14b",
 		Prompt: systemMsg + "\n\n" + prompt,
 		Stream: false,
 	}

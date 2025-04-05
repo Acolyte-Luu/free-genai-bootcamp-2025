@@ -1,0 +1,27 @@
+[
+  {
+    "setup": "会話の場面です。",
+    "question": "質問に答えてください。",
+    "options": [
+      "うどん",
+      "ハンバーグ",
+      "寿司",
+      "天ぷら"
+    ],
+    "similar_questions": [
+      {
+        "question": "<question>Setup: A man and woman are at a restaurant.\nThe man is looking at the menu.\nWoman: \"何を注文しますか？\"\nMan: \"ラーメンを食べたいです。\"\nQuestion: What does the man want to eat?\nOptions:\n1. Rice\n2. Ramen\n3. Sushi\n4. Tempura</question>",
+        "metadata": {
+          "section": "問題1",
+          "type": "conversation",
+          "video_id": "hardcoded"
+        },
+        "id": "hardcoded_0",
+        "score": 0.30328655027133095
+      }
+    ],
+    "correct_index": 1,
+    "timestamp": "22:09:38",
+    "practice_type": "Dialogue Practice"
+  }
+]

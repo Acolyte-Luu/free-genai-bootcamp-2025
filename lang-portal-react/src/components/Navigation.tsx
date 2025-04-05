@@ -39,7 +39,6 @@ const Navigation = () => {
               <NavItem href="/study_activities">Study Activities</NavItem>
               <NavItem href="/words">Words</NavItem>
               <NavItem href="/groups">Word Groups</NavItem>
-              <NavItem href="/sessions">Sessions</NavItem>
               <NavItem href="/settings">Settings</NavItem>
               <NavItem href="/vocabulary-importer">
                 <BookOpen className="w-4 h-4 mr-2" />

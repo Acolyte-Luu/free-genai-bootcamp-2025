@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -14,12 +13,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Settings = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
-  const [darkMode, setDarkMode] = useState(false);
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
+
+  const [isDarkModeChecked, setIsDarkModeChecked] = useState(theme === 'dark');
+
+  useEffect(() => {
+    setIsDarkModeChecked(theme === 'dark');
+  }, [theme]);
 
   const handleReset = () => {
     if (confirmText.toLowerCase() === "reset me") {
@@ -39,12 +45,9 @@ const Settings = () => {
   };
 
   const handleDarkModeToggle = (checked: boolean) => {
-    setDarkMode(checked);
-    // TODO: Implement actual dark mode toggle
-    toast({
-      title: `Dark Mode ${checked ? "Enabled" : "Disabled"}`,
-      description: "Your preference has been saved.",
-    });
+    const newTheme = checked ? 'dark' : 'light';
+    setTheme(newTheme);
+    setIsDarkModeChecked(checked);
   };
 
   return (
@@ -58,8 +61,9 @@ const Settings = () => {
             <p className="text-sm text-gray-500">Toggle dark mode on or off</p>
           </div>
           <Switch
-            checked={darkMode}
+            checked={isDarkModeChecked}
             onCheckedChange={handleDarkModeToggle}
+            aria-label="Toggle dark mode"
           />
         </div>
 

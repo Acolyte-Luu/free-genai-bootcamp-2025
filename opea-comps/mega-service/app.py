@@ -76,11 +76,11 @@ class ExampleService:
             if not isinstance(request, dict):
                 # Handle ChatCompletionRequest
                 combined_prompt = request.messages[-1].content if request.messages else ""
-                model = request.model or "llama3.1:8b"
+                model = request.model or "qwen2.5:14b"
             else:
                 # Handle dict
                 combined_prompt = request.get("prompt", "")
-                model = request.get("model", "llama3.1:8b")
+                model = request.get("model", "qwen2.5:14b")
             
             logger.info(f"Combined prompt: {combined_prompt}")
             
@@ -111,25 +111,35 @@ class ExampleService:
             )
             
             content = ""
+            buffer = ""
             for chunk in response.iter_content(chunk_size=None):
                 if chunk:
                     chunk_str = chunk.decode('utf-8')
                     logger.info(f"Raw chunk: {chunk_str!r}")
                     
-                    # Extract content from the chunk
-                    if chunk_str.startswith("data: "):
-                        data = chunk_str[6:].strip()
-                        if data == "[DONE]":
-                            break
-                        try:
-                            json_data = json.loads(data)
-                            if 'choices' in json_data and len(json_data['choices']) > 0:
-                                delta = json_data['choices'][0].get('delta', {})
-                                if 'content' in delta:
-                                    content += delta['content']
-                                    logger.info(f"Current content: {content}")
-                        except json.JSONDecodeError:
-                            logger.warning(f"Failed to parse JSON: {data}")
+                    # Add to buffer and process complete messages
+                    buffer += chunk_str
+                    # Process all complete SSE messages in buffer
+                    while '\n\n' in buffer:
+                        message, buffer = buffer.split('\n\n', 1)
+                        # Process each line in the message
+                        for line in message.split('\n'):
+                            if line.startswith('data: '):
+                                data = line[6:].strip()
+                                if data == "[DONE]":
+                                    continue  # Skip [DONE] marker but keep processing
+                                
+                                try:
+                                    json_data = json.loads(data)
+                                    if 'choices' in json_data and len(json_data['choices']) > 0:
+                                        delta = json_data['choices'][0].get('delta', {})
+                                        if 'content' in delta and delta['content']:
+                                            content += delta['content']
+                                            logger.info(f"Current content: {content}")
+                                except json.JSONDecodeError:
+                                    logger.warning(f"Failed to parse JSON: {data}")
+                                    # Continue processing rather than breaking
+                                    continue
             
             logger.info(f"Final content: {content}")
             

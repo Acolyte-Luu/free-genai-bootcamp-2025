@@ -8,7 +8,7 @@ import json
 
 # Model ID
 # MODEL_ID = "amazon.nova-micro-v1:0"
-MODEL_ID = "llama3.1:8b"
+MODEL_ID = "qwen2.5:7b"
 
 
 class LocalLLMChat:

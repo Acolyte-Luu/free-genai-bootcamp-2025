@@ -1,5 +1,4 @@
-
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -19,159 +18,229 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchGroupById, fetchWordsForGroup, fetchSessionsForGroup } from "@/lib/api";
+import { SingleGroupData, GroupWord, GroupSession } from "@/types/api";
+import { format, formatDistanceStrict } from 'date-fns';
 
-type Word = {
-  id: number;
-  japanese: string;
-  romaji: string;
-  english: string;
-  correct: number;
-  wrong: number;
-  audioUrl?: string;
-};
-
-type SortField = "japanese" | "romaji" | "english" | "correct" | "wrong";
+type SortField = "japanese" | "romaji" | "english" | "correct_count" | "incorrect_count";
 type SortDirection = "asc" | "desc";
 
 const GroupShow = () => {
-  const { id } = useParams();
-  const [sortField, setSortField] = useState<SortField>("japanese");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [currentPage, setCurrentPage] = useState(1);
+  const { id: groupId } = useParams<{ id: string }>();
+  const [wordSortField, setWordSortField] = useState<SortField>("japanese");
+  const [wordSortDirection, setWordSortDirection] = useState<SortDirection>("asc");
+  const [wordCurrentPage, setWordCurrentPage] = useState(1);
+  const wordsPerPage = 50;
 
-  // Temporary mock data - replace with real data later
-  const group = {
-    id: Number(id),
-    name: "Core Verbs",
-    description: "Essential verbs for daily conversation",
-    wordCount: 50,
-  };
+  const [sessionCurrentPage, setSessionCurrentPage] = useState(1);
+  const sessionsPerPage = 10;
 
-  const mockWords: Word[] = [
-    {
-      id: 1,
-      japanese: "食べる",
-      romaji: "taberu",
-      english: "to eat",
-      correct: 15,
-      wrong: 3,
-      audioUrl: "/audio/taberu.mp3",
-    },
-  ];
+  const { 
+    data: groupData, 
+    isLoading: isLoadingGroup, 
+    isError: isErrorGroup, 
+    error: errorGroup 
+  } = useQuery({
+    queryKey: ['group', groupId], 
+    queryFn: () => fetchGroupById(groupId!),
+    enabled: !!groupId,
+  });
 
-  const totalPages = Math.ceil(mockWords.length / 50);
+  const { 
+    data: wordsResponse, 
+    isLoading: isLoadingWords, 
+    isError: isErrorWords, 
+    error: errorWords 
+  } = useQuery({
+    queryKey: ['groupWords', groupId, wordCurrentPage], 
+    queryFn: () => fetchWordsForGroup(groupId!, wordCurrentPage, wordsPerPage),
+    enabled: !!groupId,
+    placeholderData: (previousData) => previousData, 
+  });
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  const { 
+    data: sessionsResponse, 
+    isLoading: isLoadingSessions, 
+    isError: isErrorSessions, 
+    error: errorSessions 
+  } = useQuery({
+    queryKey: ['groupSessions', groupId, sessionCurrentPage], 
+    queryFn: () => fetchSessionsForGroup(groupId!, sessionCurrentPage, sessionsPerPage),
+    enabled: !!groupId,
+    placeholderData: (previousData) => previousData,
+  });
+
+  const group = groupData?.data;
+  const words = Array.isArray(wordsResponse?.data?.data) ? wordsResponse.data.data : [];
+  const wordsPagination = wordsResponse?.data?.pagination;
+  const wordsTotalPages = wordsPagination?.total_pages ?? 1;
+  
+  const sessions = sessionsResponse?.data ?? [];
+  const sessionsPagination = sessionsResponse?.pagination;
+  const sessionsTotalPages = sessionsPagination?.total_pages ?? 1;
+
+  const sortedWords = [...words].sort((a, b) => {
+    let comparison = 0;
+    if (wordSortField === 'correct_count' || wordSortField === 'incorrect_count') {
+      const statA = a.stats?.[wordSortField];
+      const statB = b.stats?.[wordSortField];
+      comparison = (statA ?? 0) - (statB ?? 0);
     } else {
-      setSortField(field);
-      setSortDirection("asc");
+      const fieldA = a[wordSortField as keyof Omit<GroupWord, 'stats'>];
+      const fieldB = b[wordSortField as keyof Omit<GroupWord, 'stats'>];
+      if (typeof fieldA === 'string' && typeof fieldB === 'string') {
+        comparison = fieldA.localeCompare(fieldB);
+      } else if (typeof fieldA === 'number' && typeof fieldB === 'number') {
+        comparison = fieldA - fieldB; 
+      }
+    }
+    return wordSortDirection === 'asc' ? comparison : comparison * -1;
+  });
+
+  const handleWordSort = (field: SortField) => {
+    if (wordSortField === field) {
+      setWordSortDirection(wordSortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setWordSortField(field);
+      setWordSortDirection("asc");
     }
   };
 
-  const getSortIndicator = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? "↓" : "↑";
+  const getWordSortIndicator = (field: SortField) => {
+    if (wordSortField !== field) return null;
+    return wordSortDirection === "asc" ? "↓" : "↑";
   };
 
-  const playAudio = (audioUrl: string) => {
-    const audio = new Audio(audioUrl);
-    audio.play().catch(console.error);
+  const playAudio = (/* audioUrl: string */) => {
+    console.warn("Audio playback not implemented with backend data yet.");
   };
+
+  if (isLoadingGroup) {
+    return <p>Loading group details...</p>;
+  }
+
+  if (isErrorGroup) {
+    return <p>Error loading group details: {errorGroup instanceof Error ? errorGroup.message : 'Unknown error'}</p>;
+  }
+  
+  if (isErrorWords) {
+    return <p>Error loading words for this group: {errorWords instanceof Error ? errorWords.message : 'Unknown error'}</p>;
+  }
+
+  if (!group) {
+    return <p>Group not found.</p>;
+  }
 
   return (
-    <div className="animate-fadeIn">
+    <div className="animate-fadeIn space-y-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{group.name}</h1>
-        <p className="text-gray-600">{group.description}</p>
+        <p className="text-gray-600">Total words: {group.stats?.total_word_count ?? 'N/A'}</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort("japanese")}
-              >
-                Japanese {getSortIndicator("japanese")}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort("romaji")}
-              >
-                Romaji {getSortIndicator("romaji")}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort("english")}
-              >
-                English {getSortIndicator("english")}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort("correct")}
-              >
-                Correct {getSortIndicator("correct")}
-              </TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => handleSort("wrong")}
-              >
-                Wrong {getSortIndicator("wrong")}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockWords.map((word) => (
-              <TableRow key={word.id}>
-                <TableCell className="flex items-center space-x-2">
-                  <span>{word.japanese}</span>
-                  {word.audioUrl && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => playAudio(word.audioUrl!)}
-                      className="p-1"
-                    >
-                      <Volume2 className="h-4 w-4" />
-                    </Button>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Words in this Group</h2>
+        {isLoadingWords && <p>Loading words...</p>}
+        {isErrorWords && <p>Error loading words: {errorWords instanceof Error ? errorWords.message : 'Unknown error'}</p>}
+        {!isLoadingWords && !isErrorWords && (
+          <>
+            <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="cursor-pointer" onClick={() => handleWordSort("japanese")}>Japanese {getWordSortIndicator("japanese")}</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleWordSort("romaji")}>Romaji {getWordSortIndicator("romaji")}</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleWordSort("english")}>English {getWordSortIndicator("english")}</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleWordSort("correct_count")}>Correct {getWordSortIndicator("correct_count")}</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleWordSort("incorrect_count")}>Wrong {getWordSortIndicator("incorrect_count")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedWords.length === 0 ? (
+                    <TableRow><TableCell colSpan={5} className="h-24 text-center">No words found in this group.</TableCell></TableRow>
+                  ) : (
+                    sortedWords.map((word: GroupWord, index: number) => (
+                      <TableRow key={word.japanese || index}>
+                        <TableCell className="flex items-center space-x-2">
+                          <span>{word.japanese}</span>
+                          <Button variant="ghost" size="sm" onClick={() => playAudio()} className="p-1 opacity-50" disabled title="Audio playback TBD">
+                            <Volume2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                        <TableCell>{word.romaji}</TableCell>
+                        <TableCell>{word.english}</TableCell>
+                        <TableCell>{word.stats?.correct_count ?? 0}</TableCell>
+                        <TableCell>{word.stats?.incorrect_count ?? 0}</TableCell>
+                      </TableRow>
+                    ))
                   )}
-                </TableCell>
-                <TableCell>{word.romaji}</TableCell>
-                <TableCell>{word.english}</TableCell>
-                <TableCell>{word.correct}</TableCell>
-                <TableCell>{word.wrong}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                </TableBody>
+              </Table>
+            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious href="#" onClick={() => setWordCurrentPage(p => Math.max(1, p - 1))} className={wordCurrentPage === 1 ? "pointer-events-none opacity-50" : ""} />
+                </PaginationItem>
+                <PaginationItem><PaginationLink>Page {wordCurrentPage} of {wordsTotalPages}</PaginationLink></PaginationItem>
+                <PaginationItem>
+                  <PaginationNext href="#" onClick={() => setWordCurrentPage(p => Math.min(wordsTotalPages, p + 1))} className={wordCurrentPage === wordsTotalPages ? "pointer-events-none opacity-50" : ""} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </>
+        )}
       </div>
-
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              href="#"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationLink>
-              Page <span className="font-bold">{currentPage}</span> of {totalPages}
-            </PaginationLink>
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationNext
-              href="#"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+      
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Study Sessions</h2>
+        {isLoadingSessions && <p>Loading sessions...</p>}
+        {isErrorSessions && <p>Error loading sessions: {errorSessions instanceof Error ? errorSessions.message : 'Unknown error'}</p>}
+        {!isLoadingSessions && !isErrorSessions && (
+           <>
+            <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Reviewed</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Duration</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sessions.length === 0 ? (
+                     <TableRow><TableCell colSpan={4} className="h-24 text-center">No study sessions recorded for this group yet.</TableCell></TableRow>
+                  ) : (
+                    sessions.map((session: GroupSession) => (
+                      <TableRow key={session.id}>
+                        <TableCell>{session.activity_name}</TableCell>
+                        <TableCell>{session.review_items_count} words</TableCell>
+                        <TableCell>{format(new Date(session.start_time), 'PPp')}</TableCell>
+                        <TableCell>
+                          {formatDistanceStrict(new Date(session.end_time), new Date(session.start_time))}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious href="#" onClick={() => setSessionCurrentPage(p => Math.max(1, p - 1))} className={sessionCurrentPage === 1 ? "pointer-events-none opacity-50" : ""} />
+                </PaginationItem>
+                <PaginationItem><PaginationLink>Page {sessionCurrentPage} of {sessionsTotalPages}</PaginationLink></PaginationItem>
+                <PaginationItem>
+                  <PaginationNext href="#" onClick={() => setSessionCurrentPage(p => Math.min(sessionsTotalPages, p + 1))} className={sessionCurrentPage === sessionsTotalPages ? "pointer-events-none opacity-50" : ""} />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </>
+        )}
+      </div>
     </div>
   );
 };

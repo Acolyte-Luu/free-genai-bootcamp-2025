@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -33,7 +32,20 @@ const StudyActivities = () => {
   ];
 
   const handleLaunch = (activityId: number, groupId: number = 3) => {
-    window.open(`http://localhost:8080?group_id=${groupId}`, '_blank');
+    // TODO: Replace with the actual URL of your deployed jp-mud frontend
+    const jpMudAppUrl = 'http://localhost:5173/'; 
+    const defaultUrl = `http://localhost:8080?group_id=${groupId}`; // Keep original or define others
+
+    if (activityId === 1) { // Assuming 1 is the ID for "Adventure MUD"
+      // window.open(jpMudAppUrl, '_blank'); // Original: Opens in new tab
+      window.location.href = jpMudAppUrl; // Navigate current tab
+    } else {
+      // Handle other activities if needed, maybe open defaultUrl or specific URLs
+      // For now, let's keep the original behavior for other activities
+      window.open(defaultUrl, '_blank'); 
+      // Or perhaps show an alert:
+      // alert(`Activity ${activityId} launch not implemented yet.`);
+    }
   };
 
   return (

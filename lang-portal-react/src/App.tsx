@@ -13,9 +13,9 @@ import Words from "@/pages/Words";
 import WordShow from "@/pages/WordShow";
 import Groups from "@/pages/Groups";
 import GroupShow from "@/pages/GroupShow";
-import Sessions from "@/pages/Sessions";
 import Settings from "@/pages/Settings";
 import { VocabularyImporter } from '@/components/VocabularyImporter';
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const queryClient = new QueryClient();
 
@@ -30,30 +30,31 @@ const Layout = ({ children }: { children: React.ReactNode }) => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/study_activities" element={<StudyActivities />} />
-            <Route path="/study_activities/:id" element={<StudyActivityShow />} />
-            <Route path="/words" element={<Words />} />
-            <Route path="/words/:id" element={<WordShow />} />
-            <Route path="/groups" element={<Groups />} />
-            <Route path="/groups/:id" element={<GroupShow />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/vocabulary-importer" element={<VocabularyImporter />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/study_activities" element={<StudyActivities />} />
+              <Route path="/study_activities/:id" element={<StudyActivityShow />} />
+              <Route path="/words" element={<Words />} />
+              <Route path="/words/:id" element={<WordShow />} />
+              <Route path="/groups" element={<Groups />} />
+              <Route path="/groups/:id" element={<GroupShow />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/vocabulary-importer" element={<VocabularyImporter />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

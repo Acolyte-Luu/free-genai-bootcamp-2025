@@ -1,69 +1,57 @@
-# Welcome to your Lovable project
+# Lang Portal React Frontend
 
-## Project info
+This directory contains the React frontend application for the Language Learning Portal, built with Vite, TypeScript, Tailwind CSS, and shadcn/ui.
 
-**URL**: https://lovable.dev/projects/bcb26809-79a5-4e87-8e2b-b0fc548c316c
+## Prerequisites
 
-## How can I edit this code?
+*   **Node.js:** (Recommend LTS version) - Download from [nodejs.org](https://nodejs.org/)
+*   **npm:** (Node Package Manager) - Comes bundled with Node.js.
+*   *Optional:* `bun` or `yarn` can also be used, but this guide prioritizes `npm`.
 
-There are several ways of editing your application.
+## Setup & Installation
 
-**Use Lovable**
+1.  **Clone the Repository:** If you haven't already, clone the main project repository.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bcb26809-79a5-4e87-8e2b-b0fc548c316c) and start prompting.
+2.  **Navigate to Frontend Directory:**
+    ```bash
+    cd path/to/free-genai-bootcamp-2025/lang-portal-react
+    ```
 
-Changes made via Lovable will be committed automatically to this repo.
+3.  **Install Dependencies:**
+    Using npm:
+    ```bash
+    npm install
+    ```
 
-**Use your preferred IDE**
+## Configuration
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+The application needs to know the URL of the backend API.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1.  **Create `.env` file:** Create a file named `.env` in the `lang-portal-react` directory.
 
-Follow these steps:
+2.  **Set API URL:** Add the following line to the `.env` file, replacing the URL with the actual address where your Go backend is running:
+    ```env
+    VITE_API_URL=http://localhost:8080/api 
+    ```
+    (The default port for the Go backend is often 8080, adjust if necessary).
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Required Running Services
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Before running the React development server, ensure the following backend services are running:
 
-# Step 3: Install the necessary dependencies.
-npm i
+1.  **Go Backend API (`lang-portal/backend-go`):**
+    *   Provides the main data API for words, groups, sessions, and dashboard stats.
+    *   Make sure this backend is running and accessible at the URL specified in your `.env` file (e.g., `http://localhost:8080`). Refer to the Go backend's documentation for instructions on how to run it.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+2.  **`jp-mud` Application (Optional, for Adventure MUD):**
+    *   Required for the "Adventure MUD" study activity link.
+    *   If you intend to use this activity, ensure the `jp-mud` frontend is running, typically at `http://localhost:5173/`. Refer to the `jp-mud` project documentation for instructions.
+
+## Running the Development Server
+
+Once dependencies are installed, the `.env` file is configured, and the required backend services are running:
+
+Using npm:
+```bash
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/bcb26809-79a5-4e87-8e2b-b0fc548c316c) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)

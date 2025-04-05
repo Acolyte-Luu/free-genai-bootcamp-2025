@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,17 @@ const StudyActivityShow = () => {
   ];
 
   const handleLaunch = (groupId: number = 3) => {
-    window.open(`http://localhost:8080?group_id=${groupId}`, '_blank');
+    // Activity object is defined earlier in the component using useParams
+    const jpMudAppUrl = 'http://localhost:5173/';
+    const defaultUrl = `http://localhost:8080?group_id=${groupId}`;
+
+    // Check if the current activity's ID is 1 (assuming this corresponds to Adventure MUD)
+    if (activity.id === 1) { 
+      window.location.href = jpMudAppUrl; // Navigate current tab to jp-mud app
+    } else {
+      // Keep original behavior for other activities (opens defaultUrl in new tab)
+      window.open(defaultUrl, '_blank'); 
+    }
   };
 
   return (
